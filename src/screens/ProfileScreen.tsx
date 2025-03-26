@@ -1,6 +1,8 @@
 import { View, Text } from "react-native";
+import tailwind from 'tailwind-rn';
 
-export default function ProfileScreen() {
+
+const ProfileScreen: React.FC = () => {
   return (
     <View className="flex-1 justify-center items-center bg-white">
       <Text className="text-2xl font-bold text-blue-500">👤 Profile Screen</Text>
@@ -8,3 +10,5 @@ export default function ProfileScreen() {
     </View>
   );
 }
+
+export default ProfileScreen;

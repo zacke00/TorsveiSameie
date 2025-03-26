@@ -1,22 +1,21 @@
 import { createStackNavigator } from "@react-navigation/stack";
+import { View } from "react-native";
 import HomeRoutes from "./Index";
-import AuthScreen from "../screens/LoginScreen";
-import { NavigationContainer } from "@react-navigation/native";
 import { useUserContext } from "../Providers/AuthContext";
 import Login from "../screens/LoginScreen";
 import SignUp from "../screens/SignupScreen";
-import useOwnNavigation from "../Hooks/useOwnNav";
+import CalendarScreen from "../screens/CalendarScreen";
+import AddEventScreen from "../screens/AddEventScreen";
+
 
 const { Navigator, Screen } = createStackNavigator();
 
 const AppRoutes: React.FC = () => {
-  const noHeader = { headerShown: false };
   const { user } = useUserContext();
-  const { navigate } = useOwnNavigation(); // Using your custom navigation hook
 
   return (
-
-      <Navigator id={undefined}>
+    
+      <Navigator id={undefined} screenOptions={{ headerShown: false}}>
         {!user ? (
           <>
             <Screen name="Login" component={Login} />
@@ -24,7 +23,9 @@ const AppRoutes: React.FC = () => {
           </>
         ) : (
           <Screen name="HomeRoutes" component={HomeRoutes} />
-        )}
+          )}
+      <Screen name="Calendar" component={CalendarScreen} />
+      <Screen name="AddEvent" component={AddEventScreen} />
       </Navigator>
 
   );

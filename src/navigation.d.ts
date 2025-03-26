@@ -2,5 +2,6 @@ export type RootStackParamList = {
     HomeRoutes: undefined;
     SignUp: undefined;
     Login: undefined;
-    // Add more screens here if needed
+    Calendar: undefined;
+    AddEvent: { month: number; day: number };  // Specify the params type for AddEvent screen
   };
