@@ -17,6 +17,7 @@ const SignUpScreen: React.FC = () => {
       if (displayName == "" || displayName == null) {
         setDisplayName("Anonymous");
       }
+      
       updateProfile(userCredential.user, {
         displayName: displayName,
       });
