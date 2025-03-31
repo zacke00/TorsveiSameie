@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Alert, StyleSheet, Modal } from 'react-native';
+import { View, Text, FlatList, Alert, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { useUserContext } from '../Providers/AuthContext'; 
 import { FIREBASE_AUTH, FIREBASE_DB_POSTS } from '../firebaseConfig';  
 import { ref, onValue, remove, update } from 'firebase/database';
@@ -7,12 +7,15 @@ import { signOut } from 'firebase/auth';
 import PostItem from '../Components/Posting/PostItemComponent';
 import PostMenu from '../Components/Posting/PostMenuComponent';
 import SignOutButton from '../Components/Buttons/SignoutButtonComponent';
+import useOwnNavigation from '../Hooks/useOwnNav';
+import { RootStackParamList } from '../navigation';
 
-export default function HomeScreen() {
+const HomeScreen:React.FC = () => {
   const { user, setCurrentUser } = useUserContext();
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const nav = useOwnNavigation();
 
   const handleSignOut = async () => {
     try {
@@ -54,6 +57,7 @@ export default function HomeScreen() {
       });
   };
 
+
   const handleEditPost = (postId: string, newText: string) => {
     const postRef = ref(FIREBASE_DB_POSTS, `posts/${postId}`);
     update(postRef, { postText: newText })
@@ -69,14 +73,11 @@ export default function HomeScreen() {
 
   const renderPost = ({ item }: { item: any }) => {
     return (
-      <PostItem
-          item={item}
-          onMenuPress={() => {
-            setSelectedPost(item);
-            setShowMenu(true);
-          }}
-          user={user}
-        />
+      <TouchableOpacity
+        onPress={() => nav.navigate(`PostDetail`, { postId: item.id })}
+      >
+        <PostItem item={item} />
+      </TouchableOpacity>
     );
   };
 
@@ -84,6 +85,9 @@ export default function HomeScreen() {
     setShowMenu(false);
     setSelectedPost(null);
   };
+
+
+
 
   return (
     <View style={styles.container}>
@@ -135,3 +139,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
+
+export default HomeScreen;

@@ -7,7 +7,8 @@ type RouteList = {
     Calendar: undefined;
     Login: undefined;
     SignUp: undefined;
-    
+    PostDetail: { postId: string };
+    HomeRoutes: undefined;
 };
 
 type SolarNavigationProps = NavigationProp<RouteList>;
@@ -15,8 +16,8 @@ type SolarNavigationProps = NavigationProp<RouteList>;
 const useOwnNavigation = () => {
   const navigation = useNavigation<SolarNavigationProps>();
 
-  const navigate = (path: keyof RouteList) => {
-    navigation.navigate(path);
+  const navigate = (path: keyof RouteList, params?: any) => {
+    navigation.navigate(path, params);
   };
 
   const goBack = () => {

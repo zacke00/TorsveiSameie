@@ -1,13 +1,16 @@
-// src/components/PostItem.tsx
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { FIREBASE_AUTH } from '../../firebaseConfig';
+import { View, Text, ImageBackground, TouchableOpacity, StyleSheet } from 'react-native';
 
 const PostItem = ({ item, onMenuPress, user }: any) => {
   return (
     <View style={styles.postContainer}>
       {item.imageUrl && (
-        <Image source={{ uri: item.imageUrl }} style={styles.postImage} resizeMode="cover" />
+        <ImageBackground
+          source={{ uri: item.imageUrl }}
+          style={styles.postImage}
+          resizeMode="cover"
+        >
+        </ImageBackground>
       )}
       <Text style={styles.postText}>{item.displayName}</Text>
       <Text style={styles.postUser}>Posted on {new Date(item.timestamp).toLocaleString()}</Text>

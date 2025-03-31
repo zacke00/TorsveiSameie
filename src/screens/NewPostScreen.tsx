@@ -6,12 +6,15 @@ import { useUserContext } from "../Providers/AuthContext"; // Access user contex
 import { ref as dbRef, set } from "firebase/database"; // Firebase Realtime Database methods
 import ImagePickerComponent from "../Components/ImageController/ImagePickerComponent"; // Import Image Picker Component
 import ButtonComponent from "../Components/Buttons/ButtonComponent"; // Import Button Component
+import useOwnNavigation from "../Hooks/useOwnNav";
 
 const NewPostScreen: React.FC = () => {
   const [imageUri, setImageUri] = useState<string | null>(null); // Image URI
   const [postText, setPostText] = useState(""); // Post content text
   const [loading, setLoading] = useState(false); // State to track the loading status
   const { user } = useUserContext(); // Access the current user from context
+  const nav = useOwnNavigation(); // Custom navigation hook
+
 
   const uploadImage = async () => {
     if (!imageUri || !user) {
@@ -29,8 +32,8 @@ const NewPostScreen: React.FC = () => {
     try {
       await uploadBytes(imageRef, blob);
       const downloadUrl = await getDownloadURL(imageRef); // Get the image URL
-
       savePostToDatabase(downloadUrl);
+      
     } catch (error) {
       console.error("Error uploading image: ", error);
       Alert.alert("Error", "Failed to upload the image.");
@@ -58,6 +61,7 @@ const NewPostScreen: React.FC = () => {
 
       Alert.alert("Post Created", "Your post has been successfully created!");
       setLoading(false); // Reset loading state
+      nav.navigate("Home"); // Navigate back to the home screen
     } catch (error) {
       console.error("Error saving post: ", error);
       Alert.alert("Error", "Failed to save your post.");

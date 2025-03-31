@@ -23,8 +23,18 @@ const PostMenu: React.FC<PostMenuProps> = ({
 }) => {
   const handleDelete = () => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', onPress: () => onDelete(selectedPost?.id) },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          onDelete(selectedPost?.id);
+          onClose();
+        },
+      },
     ]);
   };
 

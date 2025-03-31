@@ -14,6 +14,9 @@ const SignUpScreen: React.FC = () => {
     try {
       const userCredential = await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password); // Add display name
       setCurrentUser(userCredential.user); // Set user in context after sign-up
+      if (displayName == "" || displayName == null) {
+        setDisplayName("Anonymous");
+      }
       updateProfile(userCredential.user, {
         displayName: displayName,
       });

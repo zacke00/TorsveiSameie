@@ -8,12 +8,15 @@ const Tab = createBottomTabNavigator();
 
 const HomeRoutes: React.FC = () => {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false}} initialRouteName={"Home"} id={undefined} >
+    <Tab.Navigator 
+      screenOptions={{ headerShown: false }} 
+      initialRouteName="Home"
+      id={undefined}
+    >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
-      <Tab.Screen name="NewPost" component={NewPostScreen}  />
+      <Tab.Screen name="NewPost" component={NewPostScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      
     </Tab.Navigator>
   );
 };
