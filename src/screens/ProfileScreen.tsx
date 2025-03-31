@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Alert, } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useUserContext } from "../Providers/AuthContext";
-import { FIREBASE_AUTH, FIREBASE_STORAGE } from "../firebaseConfig"; // Remove FIREBASE_DB_POSTS if unused
-
-import { updateProfile } from "firebase/auth";
+import { FIREBASE_AUTH, FIREBASE_STORAGE } from "../firebaseConfig";
+import { updateProfile, User } from "firebase/auth";
 import ImagePickerComponent from "../Components/ImageController/ImagePickerComponent";
-import { ref, uploadBytes, getDownloadURL,  } from "firebase/storage";
-
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import SignOutButton from "../Components/Buttons/SignoutButtonComponent";
 
 const ProfileScreen: React.FC = () => {
   const { user, setCurrentUser } = useUserContext();
@@ -29,8 +36,8 @@ const ProfileScreen: React.FC = () => {
     }
   }, [user]);
 
-  const handleImageUpload = async (uri: string) => {
-    if (!uri) return;
+  const handleImageUpload = async (uri: string | null) => {
+    if (!uri || !FIREBASE_AUTH.currentUser) return; // Guard against null user
 
     setUploading(true);
     try {
@@ -41,23 +48,30 @@ const ProfileScreen: React.FC = () => {
 
       console.log("Uploading image to Firebase Storage...");
       await uploadBytes(imageRef, blob);
-      
+
       const downloadURL = await getDownloadURL(imageRef);
       console.log("Download URL:", downloadURL);
 
       await updateProfile(FIREBASE_AUTH.currentUser, { photoURL: downloadURL });
       setImageUri(downloadURL);
-      setCurrentUser({ ...user, photoURL: downloadURL });
+      setCurrentUser({ ...user!, photoURL: downloadURL }); // Non-null assertion since we checked above
       Alert.alert("Success", "Image uploaded successfully!");
-    }catch (error) {
+    } catch (error: any) {
       console.error("Error uploading image:", error.code, error.message);
       Alert.alert("Error", "Failed to upload image: " + error.message);
+    } finally {
+      setUploading(false);
     }
-  }
+  };
 
   const handleSave = async () => {
     if (!firstName || !lastName) {
       Alert.alert("Error", "First name and last name are required.");
+      return;
+    }
+
+    if (!FIREBASE_AUTH.currentUser) {
+      Alert.alert("Error", "No authenticated user found.");
       return;
     }
 
@@ -70,13 +84,12 @@ const ProfileScreen: React.FC = () => {
       });
       console.log("Firebase Auth profile updated successfully");
 
-      // Update local user context and state
-      setCurrentUser({ ...user, displayName: newDisplayName });
+      setCurrentUser({ ...user!, displayName: newDisplayName }); // Non-null assertion
       setDisplayName(newDisplayName);
 
       Alert.alert("Success", "Profile updated successfully!");
       setIsEditing(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error.code, error.message);
       Alert.alert("Error", "Failed to update profile: " + error.message);
     }
@@ -85,6 +98,7 @@ const ProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {/* Image Container */}
+        <Text style={styles.header}>Profile</Text>
       <View style={styles.imageContainer}>
         {user?.photoURL ? (
           <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
@@ -94,13 +108,10 @@ const ProfileScreen: React.FC = () => {
           </View>
         )}
       </View>
-      {isEditing ? (
-        <ImagePickerComponent setImageUri={handleImageUpload} />
-      ) : null}
+      {isEditing ? <ImagePickerComponent setImageUri={handleImageUpload as React.Dispatch<React.SetStateAction<string | null>>} /> : null}
 
       {/* User Details */}
       <View style={styles.detailsContainer}>
-        <Text style={styles.header}>👤 Profile</Text>
         {isEditing ? (
           <>
             <Text style={styles.label}>First Name</Text>
@@ -132,9 +143,11 @@ const ProfileScreen: React.FC = () => {
       <TouchableOpacity
         style={styles.button}
         onPress={isEditing ? handleSave : () => setIsEditing(true)}
+        disabled={uploading}
       >
         <Text style={styles.buttonText}>{isEditing ? "Save" : "Edit Profile"}</Text>
       </TouchableOpacity>
+          <SignOutButton />
     </View>
   );
 };

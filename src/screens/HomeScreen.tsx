@@ -15,18 +15,6 @@ const HomeScreen: React.FC = () => {
   const nav = useOwnNavigation();
   const { permissionStatus } = useCameraPermission();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(FIREBASE_AUTH);
-      setCurrentUser(null);
-      Alert.alert("Signed out", "You have been logged out");
-      nav.navigate("Login");
-    } catch (error) {
-      console.error("Sign-out error:", error);
-      Alert.alert("Error", "An error occurred during sign out");
-    }
-  };
-
   useEffect(() => {
     if (permissionStatus === "granted") {
       console.log("Camera permission granted");
@@ -83,7 +71,7 @@ const HomeScreen: React.FC = () => {
       ) : (
         <Text style={styles.noPostsText}>No posts available. Be the first to share something!</Text>
       )}
-      <SignOutButton onSignOut={handleSignOut} />
+
     </View>
   );
 };

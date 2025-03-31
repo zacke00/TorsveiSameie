@@ -1,10 +1,27 @@
 // src/components/SignOutButton.tsx
+import { signOut } from 'firebase/auth';
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import { FIREBASE_AUTH } from '../../firebaseConfig';
+import useOwnNavigation from '../../Hooks/useOwnNav';
 
-const SignOutButton = ({ onSignOut }: any) => {
+const SignOutButton = () => {
+  const [currentUser, setCurrentUser] = React.useState(null);
+  const nav = useOwnNavigation();
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut(FIREBASE_AUTH);
+      setCurrentUser(null);
+      Alert.alert("Signed out", "You have been logged out");
+    } catch (error) {
+      console.error("Sign-out error:", error);
+      Alert.alert("Error", "An error occurred during sign out");
+    }
+  };
+
   return (
-    <TouchableOpacity onPress={onSignOut} style={styles.button}>
+    <TouchableOpacity onPress={handleSignOut} style={styles.button}>
       <Text style={styles.buttonText}>Sign Out</Text>
     </TouchableOpacity>
   );
@@ -12,7 +29,7 @@ const SignOutButton = ({ onSignOut }: any) => {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#1D4ED8',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
