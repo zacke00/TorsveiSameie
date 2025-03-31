@@ -16,7 +16,7 @@ const AppRoutes: React.FC = () => {
       <Navigator id={undefined} screenOptions={{ headerShown: false}}>
         {!user ? (
           <>
-            <Screen name="Login" component={Login} />
+            <Screen name="Login" component={Login}  />
             <Screen name="SignUp" component={SignUp} />
           </>
         ) : (
