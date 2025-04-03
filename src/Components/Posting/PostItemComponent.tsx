@@ -9,11 +9,13 @@ import {
   Alert,
 } from "react-native";
 import PostMenu from "./PostMenuComponent";
-import { ref, remove, update, onValue } from "firebase/database";
+import { ref as DB_REF, remove, update, onValue, get } from "firebase/database";
 import { FIREBASE_DB_POSTS, FIREBASE_DB } from "../../firebaseConfig";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faEllipsis } from "@fortawesome/free-solid-svg-icons";
 import { User } from "firebase/auth";
+import { deleteObject, ref } from "firebase/storage";
+import { FIREBASE_STORAGE,  } from "../../firebaseConfig";
 
 interface PostItemProps {
   item: {
@@ -40,7 +42,7 @@ const PostItem: React.FC<PostItemProps> = ({ item, user }) => {
       return;
     }
 
-    const userRef = ref(FIREBASE_DB, `users/${item.userId}`);
+    const userRef = DB_REF(FIREBASE_DB, `users/${item.userId}`);
     const unsubscribe = onValue(
       userRef,
       (snapshot) => {
@@ -66,22 +68,35 @@ const PostItem: React.FC<PostItemProps> = ({ item, user }) => {
   };
 
   const handleDeletePost = async (postId: string) => {
-    console.log("Pressed the delete button inside the postitem");
-    const postRef = ref(FIREBASE_DB_POSTS, `posts/${postId}`);
+    const postRef = DB_REF(FIREBASE_DB, `posts/${postId}`);
+  
     try {
-      console.log("Deleting post:", postId);
+      const snapshot = await get(postRef);
+      const post = snapshot.val();
+  
+      if (!post) {
+        Alert.alert("Error", "Post does not exist.");
+        return;
+      }
+  
+      // Delete the image from storage using the stored path
+      if (post.imagePath) {
+        const imageStorageRef = ref(FIREBASE_STORAGE, post.imagePath);
+        await deleteObject(imageStorageRef);
+        console.log("Image deleted successfully from storage.");
+      }
+  
+      // Remove the post from database
       await remove(postRef);
-      console.log("Post deleted successfully:", postId);
-      Alert.alert("Success", "Post has been deleted.");
-      setShowMenu(false);
+      Alert.alert("Success", "Post and associated image have been deleted.");
     } catch (error) {
-      console.error("Error deleting post:", error);
-      Alert.alert("Error", "Failed to delete the post: " + (error as Error).message);
+      console.error("Error deleting post or image:", error);
+      Alert.alert("Error", "Failed to delete the post or image.");
     }
   };
 
   const handleEditPost = async (postId: string, newText: string) => {
-    const postRef = ref(FIREBASE_DB_POSTS, `posts/${postId}`);
+    const postRef = DB_REF(FIREBASE_DB_POSTS, `posts/${postId}`);
     try {
       console.log("Editing post:", postId, "New text:", newText);
       await update(postRef, { postText: newText });

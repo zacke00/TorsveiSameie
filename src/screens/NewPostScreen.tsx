@@ -28,38 +28,45 @@ const NewPostScreen: React.FC = () => {
       Alert.alert("No image selected", "Please select an image first.");
       return;
     }
-
+  
     setLoading(true);
     const response = await fetch(imageUri);
     const blob = await response.blob();
-    const imageRef = ref(FIREBASE_STORAGE, `posts/${user.uid}/${Date.now()}.jpg`);
-
+  
+    // Define the storage path explicitly
+    const storagePath = `posts/${user.uid}/${Date.now()}.jpg`;
+    const imageRef = ref(FIREBASE_STORAGE, storagePath);
+  
     try {
       await uploadBytes(imageRef, blob);
       const downloadUrl = await getDownloadURL(imageRef);
-      savePostToDatabase(downloadUrl);
+  
+      // Pass both downloadUrl and storagePath
+      savePostToDatabase(downloadUrl, storagePath);
     } catch (error) {
       console.error("Error uploading image: ", error);
       Alert.alert("Error", "Failed to upload the image.");
       setLoading(false);
     }
   };
-
-  const savePostToDatabase = async (imageUrl: string) => {
+  
+  const savePostToDatabase = async (imageUrl: string, imagePath: string) => {
     if (!postText) {
       Alert.alert("Post Error", "Please write some content for your post.");
       setLoading(false);
       return;
     }
-
+  
     const postRef = dbRef(FIREBASE_DB_POSTS, `posts/${Date.now()}`);
     try {
       await set(postRef, {
         userId: user!.uid,
         postText: postText,
-        imageUrl: imageUrl,
+        imageUrl: imageUrl,   // for displaying image
+        imagePath: imagePath, // for future deletion purposes
         timestamp: Date.now(),
       });
+  
       Alert.alert("Post Created", "Your post has been successfully created!");
       setLoading(false);
       nav.navigate("Home");
