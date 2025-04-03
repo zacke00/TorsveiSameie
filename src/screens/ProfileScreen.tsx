@@ -97,9 +97,8 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Image Container */}
-        <Text style={styles.header}>Profile</Text>
       <View style={styles.imageContainer}>
+        <Text style={styles.header}>Profile</Text>
         {user?.photoURL ? (
           <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
         ) : (

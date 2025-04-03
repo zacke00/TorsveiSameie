@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, Alert, StyleSheet, Modal, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, Alert, StyleSheet, TouchableOpacity } from "react-native";
 import { useUserContext } from "../Providers/AuthContext";
-import { FIREBASE_AUTH, FIREBASE_DB_POSTS } from "../firebaseConfig";
+import { FIREBASE_DB_POSTS } from "../firebaseConfig";
 import { ref, onValue } from "firebase/database";
-import { signOut } from "firebase/auth";
 import PostItem from "../Components/Posting/PostItemComponent";
-import SignOutButton from "../Components/Buttons/SignoutButtonComponent";
 import useOwnNavigation from "../Hooks/useOwnNav";
 import useCameraPermission from "../Hooks/useCameraPermissions";
 
 const HomeScreen: React.FC = () => {
-  const { user, setCurrentUser } = useUserContext();
+  const { user } = useUserContext(); // user: User | null
   const [posts, setPosts] = useState<any[]>([]);
   const nav = useOwnNavigation();
   const { permissionStatus } = useCameraPermission();
@@ -71,7 +69,6 @@ const HomeScreen: React.FC = () => {
       ) : (
         <Text style={styles.noPostsText}>No posts available. Be the first to share something!</Text>
       )}
-
     </View>
   );
 };

@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from "reac
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { FIREBASE_AUTH } from "../firebaseConfig";  // Ensure this path is correct
 import { useUserContext } from "../Providers/AuthContext"; // Access the user context
+import React from "react";
 
 const SignUpScreen: React.FC = () => {
   const [email, setEmail] = useState("");
