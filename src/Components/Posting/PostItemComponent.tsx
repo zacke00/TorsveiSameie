@@ -1,14 +1,62 @@
-import React, { useState } from "react";
-import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Modal, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ImageBackground,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Alert,
+} from "react-native";
 import PostMenu from "./PostMenuComponent";
-import { ref, remove, update } from "firebase/database";
-import { FIREBASE_DB_POSTS } from "../../firebaseConfig";
+import { ref, remove, update, onValue } from "firebase/database";
+import { FIREBASE_DB_POSTS, FIREBASE_DB } from "../../firebaseConfig";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import {faEllipsis } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsis } from "@fortawesome/free-solid-svg-icons";
+import { User } from "firebase/auth";
 
-const PostItem = ({ item, user }: any) => {
+interface PostItemProps {
+  item: {
+    id: string;
+    userId: string;
+    postText: string;
+    imageUrl?: string;
+    timestamp: number;
+  };
+  user: User | null; // Current user for menu visibility
+}
+
+const PostItem: React.FC<PostItemProps> = ({ item, user }) => {
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [postUserDisplayName, setPostUserDisplayName] = useState<string>("Loading...");
+  const [postUserPhotoURL, setPostUserPhotoURL] = useState<string | null>(null);
+
+  // Fetch displayName and photoURL from users/{item.userId}
+  useEffect(() => {
+    if (!item.userId) {
+      setPostUserDisplayName("Unknown User");
+      setPostUserPhotoURL(null);
+      return;
+    }
+
+    const userRef = ref(FIREBASE_DB, `users/${item.userId}`);
+    const unsubscribe = onValue(
+      userRef,
+      (snapshot) => {
+        const userData = snapshot.val();
+        setPostUserDisplayName(userData?.displayName || "Anonymous");
+        setPostUserPhotoURL(userData?.photoURL || null);
+      },
+      (error) => {
+        console.error(`Error fetching user data for userId ${item.userId}:`, error);
+        setPostUserDisplayName("Anonymous");
+        setPostUserPhotoURL(null);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [item.userId]);
 
   const handleMenuPress = (post: any) => {
     console.log("Menu pressed for post:", post.id, "User UID:", user?.uid, "Post UID:", item.userId);
@@ -18,7 +66,7 @@ const PostItem = ({ item, user }: any) => {
   };
 
   const handleDeletePost = async (postId: string) => {
-    console.log("pressed the delete button inside the postitem"); // Should appear
+    console.log("Pressed the delete button inside the postitem");
     const postRef = ref(FIREBASE_DB_POSTS, `posts/${postId}`);
     try {
       console.log("Deleting post:", postId);
@@ -28,7 +76,7 @@ const PostItem = ({ item, user }: any) => {
       setShowMenu(false);
     } catch (error) {
       console.error("Error deleting post:", error);
-      Alert.alert("Error", "Failed to delete the post: " + error.message);
+      Alert.alert("Error", "Failed to delete the post: " + (error as Error).message);
     }
   };
 
@@ -41,7 +89,7 @@ const PostItem = ({ item, user }: any) => {
       setShowMenu(false);
     } catch (error) {
       console.error("Error editing post:", error);
-      Alert.alert("Error", "Failed to edit the post: " + error.message);
+      Alert.alert("Error", "Failed to edit the post: " + (error as Error).message);
     }
   };
 
@@ -50,16 +98,15 @@ const PostItem = ({ item, user }: any) => {
     setSelectedPost(null);
   };
 
-
   return (
     <View style={styles.postContainer}>
       <View style={styles.user}>
-          <ImageBackground
-            source={{ uri: user?.photoURL }}
-            style={styles.userImage}
-            resizeMode="cover"
-          />
-        <Text style={styles.displayName}>{item.displayName}</Text>
+        <ImageBackground
+          source={{ uri: postUserPhotoURL || "https://via.placeholder.com/40" }}
+          style={styles.userImage}
+          resizeMode="cover"
+        />
+        <Text style={styles.displayName}>{postUserDisplayName}</Text>
       </View>
 
       <View style={styles.textBox}>
@@ -158,11 +205,6 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
     zIndex: 1,
-  },
-  menuButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
   },
 });
 

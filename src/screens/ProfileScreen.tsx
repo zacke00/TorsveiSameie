@@ -9,10 +9,11 @@ import {
   Alert,
 } from "react-native";
 import { useUserContext } from "../Providers/AuthContext";
-import { FIREBASE_AUTH, FIREBASE_STORAGE } from "../firebaseConfig";
-import { updateProfile, User } from "firebase/auth";
+import { FIREBASE_AUTH, FIREBASE_STORAGE, FIREBASE_DB } from "../firebaseConfig";
+import { updateProfile } from "firebase/auth";
+import { ref as dbRef, set } from "firebase/database";
 import ImagePickerComponent from "../Components/ImageController/ImagePickerComponent";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import SignOutButton from "../Components/Buttons/SignoutButtonComponent";
 
 const ProfileScreen: React.FC = () => {
@@ -37,24 +38,25 @@ const ProfileScreen: React.FC = () => {
   }, [user]);
 
   const handleImageUpload = async (uri: string | null) => {
-    if (!uri || !FIREBASE_AUTH.currentUser) return; // Guard against null user
+    if (!uri || !FIREBASE_AUTH.currentUser) return;
 
     setUploading(true);
     try {
       const response = await fetch(uri);
       const blob = await response.blob();
-      console.log("Image blob:", blob);
-      const imageRef = ref(FIREBASE_STORAGE, `profile_images/${FIREBASE_AUTH.currentUser.uid}`);
-
-      console.log("Uploading image to Firebase Storage...");
+      const imageRef = storageRef(FIREBASE_STORAGE, `profile_images/${FIREBASE_AUTH.currentUser.uid}`);
       await uploadBytes(imageRef, blob);
-
       const downloadURL = await getDownloadURL(imageRef);
-      console.log("Download URL:", downloadURL);
 
       await updateProfile(FIREBASE_AUTH.currentUser, { photoURL: downloadURL });
+      const userRef = dbRef(FIREBASE_DB, `users/${FIREBASE_AUTH.currentUser.uid}`);
+      await set(userRef, {
+        displayName: displayName || `${firstName} ${lastName}`,
+        photoURL: downloadURL,
+      });
+
       setImageUri(downloadURL);
-      setCurrentUser({ ...user!, photoURL: downloadURL }); // Non-null assertion since we checked above
+      setCurrentUser({ ...user!, photoURL: downloadURL });
       Alert.alert("Success", "Image uploaded successfully!");
     } catch (error: any) {
       console.error("Error uploading image:", error.code, error.message);
@@ -82,9 +84,15 @@ const ProfileScreen: React.FC = () => {
       await updateProfile(FIREBASE_AUTH.currentUser, {
         displayName: newDisplayName,
       });
-      console.log("Firebase Auth profile updated successfully");
 
-      setCurrentUser({ ...user!, displayName: newDisplayName }); // Non-null assertion
+      // Save to users collection
+      const userRef = dbRef(FIREBASE_DB, `users/${FIREBASE_AUTH.currentUser.uid}`);
+      await set(userRef, {
+        displayName: newDisplayName,
+        photoURL: imageUri || user?.photoURL || null,
+      });
+
+      setCurrentUser({ ...user!, displayName: newDisplayName });
       setDisplayName(newDisplayName);
 
       Alert.alert("Success", "Profile updated successfully!");
@@ -107,9 +115,10 @@ const ProfileScreen: React.FC = () => {
           </View>
         )}
       </View>
-      {isEditing ? <ImagePickerComponent setImageUri={handleImageUpload as React.Dispatch<React.SetStateAction<string | null>>} /> : null}
+      {isEditing ? (
+        <ImagePickerComponent setImageUri={handleImageUpload as React.Dispatch<React.SetStateAction<string | null>>} />
+      ) : null}
 
-      {/* User Details */}
       <View style={styles.detailsContainer}>
         {isEditing ? (
           <>
@@ -138,7 +147,6 @@ const ProfileScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Edit/Save Button */}
       <TouchableOpacity
         style={styles.button}
         onPress={isEditing ? handleSave : () => setIsEditing(true)}
@@ -146,7 +154,7 @@ const ProfileScreen: React.FC = () => {
       >
         <Text style={styles.buttonText}>{isEditing ? "Save" : "Edit Profile"}</Text>
       </TouchableOpacity>
-          <SignOutButton />
+      <SignOutButton />
     </View>
   );
 };

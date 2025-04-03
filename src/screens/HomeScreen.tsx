@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, StyleSheet, TouchableOpacity } from "react-native";
 import { useUserContext } from "../Providers/AuthContext";
-import { FIREBASE_DB_POSTS } from "../firebaseConfig";
+import { FIREBASE_DB } from "../firebaseConfig";
 import { ref, onValue } from "firebase/database";
 import PostItem from "../Components/Posting/PostItemComponent";
 import useOwnNavigation from "../Hooks/useOwnNav";
 import useCameraPermission from "../Hooks/useCameraPermissions";
 
 const HomeScreen: React.FC = () => {
-  const { user } = useUserContext(); // user: User | null
+  const { user } = useUserContext();
   const [posts, setPosts] = useState<any[]>([]);
   const nav = useOwnNavigation();
   const { permissionStatus } = useCameraPermission();
@@ -24,12 +24,16 @@ const HomeScreen: React.FC = () => {
       );
     }
   }, [permissionStatus]);
-
   useEffect(() => {
-    const postsRef = ref(FIREBASE_DB_POSTS, "posts/");
-    const fetchPosts = () => {
-      onValue(postsRef, (snapshot) => {
+    // Use FIREBASE_DB directly to ensure correct reference
+    const postsRef = ref(FIREBASE_DB, "posts"); // Explicitly define the path here
+    console.log("Setting up listener for posts at:", postsRef.toString());
+
+    const unsubscribe = onValue(
+      postsRef,
+      (snapshot) => {
         const data = snapshot.val();
+        console.log("Posts snapshot received:", data); // Debug raw data
         const postsList = data
           ? Object.keys(data).map((key) => ({
               id: key,
@@ -37,10 +41,20 @@ const HomeScreen: React.FC = () => {
             }))
           : [];
         postsList.sort((a, b) => b.timestamp - a.timestamp);
+        console.log("Processed posts list:", postsList); // Debug processed list
         setPosts(postsList);
-      });
+      },
+      (error) => {
+        console.error("Error fetching posts:", error);
+        Alert.alert("Error", "Failed to load posts: " + error.message);
+      }
+    );
+
+    // Cleanup listener on unmount
+    return () => {
+      console.log("Unsubscribing from posts listener");
+      unsubscribe();
     };
-    fetchPosts();
   }, []);
 
   const renderPost = ({ item }: { item: any }) => {
